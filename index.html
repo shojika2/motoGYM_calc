@@ -1,67 +1,299 @@
-<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>motoGYM_calc v0.0.03</title>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>motoGYM_calc v0.0.07</title>
 <style>
-:root{--bg:#0f1115;--panel:#1c2028;--panel2:#252b36;--text:#f5f7fb;--muted:#aab1c0;--accent:#4da3ff;--danger:#ff5b6e;--line:#3a4252}
-*{box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;margin:0;background:var(--bg);color:var(--text)}
-header{position:sticky;top:0;z-index:5;padding:12px 14px;background:#171b22;text-align:center;font-size:1.35rem;font-weight:800;border-bottom:1px solid var(--line)}
-header small{display:block;color:var(--muted);font-size:.8rem;font-weight:600;margin-top:2px}
-.page{padding:14px;max-width:560px;margin:auto}label{display:block;margin:12px 0 6px;font-size:1.05rem;font-weight:700;color:#dfe6f3}
-input,textarea{width:100%;font-size:1.35rem;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:#111;appearance:none}
-textarea{min-height:96px;font-size:1.05rem}button{width:100%;min-height:48px;padding:12px;margin-top:10px;font-size:1.08rem;font-weight:800;border:0;border-radius:10px;background:var(--accent);color:#fff}
-button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}button.danger{background:var(--danger)}
-button.inline{width:auto;min-height:42px;padding:8px 12px;margin:6px 6px 0 0;font-size:.95rem}
-.card{background:var(--panel);padding:14px;margin:12px 0;border-radius:14px;border:1px solid var(--line)}
-.result{font-size:2.2rem;font-weight:900;text-align:center;margin:8px 0}.sub{color:var(--muted);font-size:.92rem;text-align:center}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.target{background:var(--panel2);border-radius:12px;padding:12px;text-align:center}.target b{display:block;font-size:1.55rem;margin-top:4px}
-.hidden{display:none!important}.logRatio{font-size:1.65rem;font-weight:900}.logMeta{color:var(--muted);line-height:1.45}
-.modalBack{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:20;display:flex;align-items:flex-end}
-.modal{width:100%;max-width:560px;max-height:92vh;overflow:auto;margin:0 auto;background:var(--bg);border-radius:18px 18px 0 0;padding:14px;border:1px solid var(--line)}
-@media (min-width:700px){.modalBack{align-items:center}.modal{border-radius:18px}}
-</style></head><body>
-<header>motoGYM_calc<small>v0.0.03</small></header>
-<div id="main" class="page">
-<label>トップタイム</label><input id="top" inputmode="numeric" pattern="[0-9]*" placeholder="例 109678">
-<label>仮想トップ比 (%)</label><input id="virt" inputmode="decimal" placeholder="例 100" value="100">
-<label>自分のタイム</label><input id="mine" inputmode="numeric" pattern="[0-9]*" placeholder="例 118245">
-<div class="card"><div class="sub">タイム比</div><div class="result" id="ratio">-- %</div><div class="sub" id="timesText">トップ -- / 自分 --</div></div>
-<div class="grid" id="targets"></div>
-<button id="saveOpen">この計算結果を保存</button><button class="secondary" onclick="showLog()">Log画面</button>
+body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
+h2{margin:0 0 14px}
+small{color:#bbb}
+label{display:block;margin-top:12px;font-weight:bold}
+input,button,textarea{width:100%;font-size:1.2rem;padding:10px;margin-top:6px;box-sizing:border-box;border-radius:8px;border:0}
+.note{font-size:.9rem;color:#bbb;margin-top:4px;line-height:1.4}
+.read{font-size:1rem;color:#7fd0ff;margin-top:4px;font-weight:bold}
+.err{color:#ff7b8a}
+.card{background:#222;padding:12px;border-radius:10px;margin:10px 0}
+.big{font-size:2rem;font-weight:bold;text-align:center}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{background:#2d8cff;color:#fff;font-weight:bold}
+button.secondary{background:#333}
+button.danger{background:#c94455}
+.hidden{display:none}
+.log{background:#222;padding:12px;border-radius:10px;margin:10px 0}
+</style>
+</head>
+<body>
+<h2>motoGYM_calc<br><small>v0.0.07</small></h2>
+
+<div id="calcPage">
+<label>トップタイム</label>
+<input id="top" inputmode="numeric" pattern="[0-9]*" placeholder="例 109678">
+<div id="topRead" class="read">認識: --</div>
+<div class="note">例：59.321秒 → 059321 / 1:23.400 → 1234 / 1:59.600 → 1596</div>
+
+<label>仮想トップ比(%)</label>
+<input id="virt" inputmode="decimal" placeholder="空白=100%">
+<div class="note">空白の場合は100%として計算します。</div>
+
+<label>自分のタイム</label>
+<input id="mine" inputmode="numeric" pattern="[0-9]*" placeholder="例 118245">
+<div id="mineRead" class="read">認識: --</div>
+<div class="note">末尾の0は省略可。例：2:05.120 → 20512 / 2:05.000 → 205</div>
+
+<div class="card">
+<div>タイム比</div>
+<div class="big" id="ratio">-- %</div>
+<div id="times"></div>
 </div>
-<div id="logs" class="page hidden">
-<button class="secondary" onclick="showMain()">計算画面へ戻る</button><button onclick="csv()">CSV出力</button><button class="danger" onclick="clearLogs()">全削除</button><div id="list"></div>
+
+<div class="grid">
+<div class="card">105%<br><b id="p105">--</b></div>
+<div class="card">110%<br><b id="p110">--</b></div>
+<div class="card">115%<br><b id="p115">--</b></div>
+<div class="card">120%<br><b id="p120">--</b></div>
 </div>
-<div id="saveModal" class="modalBack hidden"><div class="modal">
-<h2 style="margin:0 0 8px">保存情報</h2><div class="card"><div class="sub">保存するタイム比</div><div class="result" id="saveRatio">-- %</div></div>
-<label>大会・練習会名</label><input id="event" placeholder="例 関東事務茶屋杯">
-<label>年月日</label><input id="date" inputmode="numeric" placeholder="例 2026-07-02">
-<label>マシン名</label><input id="machine" placeholder="例 GSX-8S">
-<label>タイヤ銘柄</label><input id="tire" placeholder="例 Q5">
-<label>その他フリー入力事項</label><textarea id="memo" placeholder="路面、天候、セッティング、反省点など"></textarea>
-<button id="saveConfirm">保存する</button><button class="secondary" onclick="closeSave()">キャンセル</button>
-</div></div>
+
+<button id="saveBtn">この計算結果を保存</button>
+<button class="secondary" onclick="showLog()">Log画面</button>
+</div>
+
+<div id="savePage" class="hidden">
+<h3>保存情報</h3>
+<label>大会・練習会名</label><input id="event">
+<label>年月日</label><input id="date" inputmode="numeric">
+<label>マシン名</label><input id="machine">
+<label>タイヤ銘柄</label><input id="tire">
+<label>その他フリー入力事項</label><textarea id="memo"></textarea>
+<button onclick="saveLog()">保存する</button>
+<button class="secondary" onclick="hideSave()">戻る</button>
+</div>
+
+<div id="logPage" class="hidden">
+<button class="secondary" onclick="showCalc()">計算画面へ戻る</button>
+<button onclick="csv()">CSV出力</button>
+<button class="danger" onclick="clearLogs()">全削除</button>
+<div id="logList"></div>
+</div>
+
 <script>
-const STORE_LOGS="motoGYM_calc_logs_v003",STORE_STATE="motoGYM_calc_state_v003",STORE_META="motoGYM_calc_meta_v003";
-const idsCalc=["top","virt","mine"],idsMeta=["event","date","machine","tire","memo"];const $=id=>document.getElementById(id);
-function parseTime(v){v=(v||"").replace(/\D/g,"");if(!v)return null;if(v.length<=3)return Number(v)/1000;if(v.length<=5){let s=parseInt(v.slice(0,-3)||"0"),ms=parseInt(v.slice(-3).padStart(3,"0"));return s+ms/1000}let ms=parseInt(v.slice(-3)),sec=parseInt(v.slice(-5,-3)),min=parseInt(v.slice(0,-5));if(sec>=60)return null;return min*60+sec+ms/1000}
-function fmt(t){if(t==null||!isFinite(t))return"--";let totalMs=Math.round(t*1000),m=Math.floor(totalMs/60000),s=Math.floor((totalMs%60000)/1000),ms=totalMs%1000;return m>0?`${m}:${String(s).padStart(2,"0")}.${String(ms).padStart(3,"0")}`:`${s}.${String(ms).padStart(3,"0")}`}
-function getCalc(){let top=parseTime($("top").value),mine=parseTime($("mine").value),virt=parseFloat($("virt").value);if(!top||!mine||!virt||virt<=0)return null;let virtualTop=top/(virt/100),ratio=mine/virtualTop*100;return{top,mine,virt,virtualTop,ratio,t105:virtualTop*1.05,t110:virtualTop*1.10,t115:virtualTop*1.15,t120:virtualTop*1.20}}
-function calc(){let c=getCalc();if(!c){$("ratio").textContent="-- %";$("timesText").textContent="トップ -- / 自分 --";$("targets").innerHTML=[105,110,115,120].map(p=>`<div class="target">${p}%<b>--</b></div>`).join("");saveState();return}
-$("ratio").textContent=c.ratio.toFixed(2)+" %";$("timesText").textContent=`トップ ${fmt(c.top)} / 仮想トップ ${fmt(c.virtualTop)} / 自分 ${fmt(c.mine)}`;$("targets").innerHTML=[[105,c.t105],[110,c.t110],[115,c.t115],[120,c.t120]].map(x=>`<div class="target">${x[0]}%<b>${fmt(x[1])}</b></div>`).join("");saveState()}
-function saveState(){let o={};idsCalc.forEach(i=>o[i]=$(i).value);localStorage.setItem(STORE_STATE,JSON.stringify(o))}
-function loadState(){let o=JSON.parse(localStorage.getItem(STORE_STATE)||"{}");idsCalc.forEach(i=>{if(o[i]!=null)$(i).value=o[i]});let m=JSON.parse(localStorage.getItem(STORE_META)||"{}");idsMeta.forEach(i=>{if(m[i]!=null)$(i).value=m[i]});calc()}
-function saveMeta(){let m={};idsMeta.forEach(i=>m[i]=$(i).value);localStorage.setItem(STORE_META,JSON.stringify(m))}
-idsCalc.forEach(i=>$(i).addEventListener("input",calc));idsMeta.forEach(i=>$(i).addEventListener("input",saveMeta));$("top").addEventListener("change",()=>$("virt").focus());$("virt").addEventListener("change",()=>$("mine").focus());
-$("saveOpen").onclick=()=>{let c=getCalc();if(!c){alert("トップタイム、仮想トップ比、自分のタイムを入力してください");return}$("saveRatio").textContent=c.ratio.toFixed(2)+" %";$("saveModal").classList.remove("hidden")};
-function closeSave(){$("saveModal").classList.add("hidden")}
-$("saveConfirm").onclick=()=>{let c=getCalc();if(!c){alert("計算できるタイムを入力してください");return}saveMeta();let logs=JSON.parse(localStorage.getItem(STORE_LOGS)||"[]"),now=new Date();logs.unshift({savedAt:now.toISOString(),event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value,topRaw:$("top").value,virtRaw:$("virt").value,mineRaw:$("mine").value,topFmt:fmt(c.top),virtualTopFmt:fmt(c.virtualTop),mineFmt:fmt(c.mine),ratio:c.ratio.toFixed(2),p105:fmt(c.t105),p110:fmt(c.t110),p115:fmt(c.t115),p120:fmt(c.t120)});logs=logs.slice(0,99);localStorage.setItem(STORE_LOGS,JSON.stringify(logs));closeSave();alert("保存しました")};
-function showLog(){$("main").classList.add("hidden");$("logs").classList.remove("hidden");loadLogs()}function showMain(){$("logs").classList.add("hidden");$("main").classList.remove("hidden")}
+const STORE="motoGYM_calc_logs_v007";
+const STATE="motoGYM_calc_state_v007";
+const META="motoGYM_calc_meta_v007";
+
+function $(id){return document.getElementById(id)}
+
+function parseTime(raw){
+  let s=(raw||"").replace(/\D/g,"");
+  if(!s)return {ok:false,sec:null,text:"--"};
+
+  // 6桁以上：通常の mssSSS / mmssSSS
+  // 例 109678 -> 1:09.678, 059321 -> 0:59.321
+  if(s.length>=6){
+    let ms=Number(s.slice(-3));
+    let sec=Number(s.slice(-5,-3));
+    let min=Number(s.slice(0,-5));
+    if(sec>=60)return {ok:false,sec:null,text:"秒が60以上です"};
+    let total=min*60+sec+ms/1000;
+    return {ok:true,sec:total,text:fmt(total)};
+  }
+
+  // 5桁：mssSS または ssSSS の曖昧さを避けるため、秒だけは先頭0推奨。
+  // 例 97321 は 0:97.321 ではなく 9:73.210 になってしまうので警告
+  if(s.length==5 && Number(s.slice(-4,-2))>=60){
+    return {ok:false,sec:null,text:"曖昧です。97.321秒は 137321 と入力してください"};
+  }
+
+  // 1〜5桁：人間入力ルール
+  // 分 + 秒2桁 + ミリ秒1〜3桁、ミリ秒末尾0は省略可
+  // 1234 -> 1:23.400, 1596 -> 1:59.600, 205 -> 2:05.000, 20512 -> 2:05.120
+  let minPart, secPart, msPart;
+  if(s.length<=2){
+    minPart="0"; secPart=s.padStart(2,"0"); msPart="";
+  }else{
+    minPart=s.slice(0,-2);
+    secPart=s.slice(-2);
+    msPart="";
+  }
+
+  if(s.length>=4){
+    minPart=s.slice(0,-3);
+    secPart=s.slice(-3,-1).padStart(2,"0");
+    msPart=s.slice(-1);
+  }
+  if(s.length==5){
+    minPart=s.slice(0,-4);
+    secPart=s.slice(-4,-2).padStart(2,"0");
+    msPart=s.slice(-2);
+  }
+
+  let min=Number(minPart||0);
+  let sec=Number(secPart||0);
+  if(sec>=60)return {ok:false,sec:null,text:"秒が60以上です"};
+  let ms=Number((msPart||"").padEnd(3,"0"));
+  let total=min*60+sec+ms/1000;
+  return {ok:true,sec:total,text:fmt(total)};
+}
+
+function fmt(x){
+  if(x==null||!isFinite(x))return "--";
+  let ms=Math.round(x*1000);
+  let m=Math.floor(ms/60000);
+  let s=Math.floor((ms%60000)/1000);
+  let mm=ms%1000;
+  return `${m}:${String(s).padStart(2,"0")}.${String(mm).padStart(3,"0")}`;
+}
+
+function readVirt(){
+  let v=$("virt").value.trim();
+  if(v==="")return 100;
+  let n=parseFloat(v);
+  return isFinite(n)&&n>0?n:null;
+}
+
+function calc(){
+  let top=parseTime($("top").value);
+  let mine=parseTime($("mine").value);
+  $("topRead").textContent="認識: "+top.text;
+  $("mineRead").textContent="認識: "+mine.text;
+  $("topRead").className=top.ok||!$("top").value?"read":"read err";
+  $("mineRead").className=mine.ok||!$("mine").value?"read":"read err";
+
+  let vp=readVirt();
+  if(!top.ok||!mine.ok||!vp){
+    $("ratio").textContent="-- %";
+    $("times").textContent="";
+    ["p105","p110","p115","p120"].forEach(id=>$(id).textContent="--");
+    saveState();
+    return null;
+  }
+
+  let virtualTop=top.sec/(vp/100);
+  let ratio=mine.sec/virtualTop*100;
+  $("ratio").textContent=ratio.toFixed(2)+" %";
+  $("times").textContent=`Top ${fmt(top.sec)} / Virtual ${fmt(virtualTop)} / Mine ${fmt(mine.sec)}`;
+  $("p105").textContent=fmt(virtualTop*1.05);
+  $("p110").textContent=fmt(virtualTop*1.10);
+  $("p115").textContent=fmt(virtualTop*1.15);
+  $("p120").textContent=fmt(virtualTop*1.20);
+
+  saveState();
+  return {top,mine,vp,virtualTop,ratio};
+}
+
+function saveState(){
+  let o={top:$("top").value,virt:$("virt").value,mine:$("mine").value};
+  localStorage.setItem(STATE,JSON.stringify(o));
+}
+function loadState(){
+  let o=JSON.parse(localStorage.getItem(STATE)||"{}");
+  ["top","virt","mine"].forEach(k=>{if(o[k]!=null)$(k).value=o[k]});
+  let m=JSON.parse(localStorage.getItem(META)||"{}");
+  ["event","date","machine","tire","memo"].forEach(k=>{if(m[k]!=null)$(k).value=m[k]});
+  calc();
+}
+function saveMeta(){
+  let m={event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value};
+  localStorage.setItem(META,JSON.stringify(m));
+}
+
+["top","virt","mine"].forEach(id=>$(id).addEventListener("input",calc));
+["event","date","machine","tire","memo"].forEach(id=>$(id).addEventListener("input",saveMeta));
+
+$("saveBtn").onclick=()=>{
+  let c=calc();
+  if(!c){alert("計算できるタイムを入力してください");return;}
+  $("calcPage").classList.add("hidden");
+  $("savePage").classList.remove("hidden");
+};
+
+function hideSave(){
+  $("savePage").classList.add("hidden");
+  $("calcPage").classList.remove("hidden");
+}
+
+function saveLog(){
+  let c=calc();
+  if(!c){alert("計算できるタイムを入力してください");return;}
+  saveMeta();
+  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+  logs.unshift({
+    savedAt:new Date().toISOString(),
+    event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value,
+    topRaw:$("top").value,virtRaw:$("virt").value,mineRaw:$("mine").value,
+    topFmt:c.top.text,virtualTopFmt:fmt(c.virtualTop),mineFmt:c.mine.text,
+    ratio:c.ratio.toFixed(2),
+    p105:fmt(c.virtualTop*1.05),p110:fmt(c.virtualTop*1.10),p115:fmt(c.virtualTop*1.15),p120:fmt(c.virtualTop*1.20)
+  });
+  logs=logs.slice(0,99);
+  localStorage.setItem(STORE,JSON.stringify(logs));
+  alert("保存しました");
+  hideSave();
+}
+
+function showLog(){
+  $("calcPage").classList.add("hidden");
+  $("savePage").classList.add("hidden");
+  $("logPage").classList.remove("hidden");
+  loadLogs();
+}
+function showCalc(){
+  $("logPage").classList.add("hidden");
+  $("calcPage").classList.remove("hidden");
+}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function loadLogs(){let logs=JSON.parse(localStorage.getItem(STORE_LOGS)||"[]");$("list").innerHTML=logs.length?"":'<div class="card">Logはまだありません</div>';logs.forEach((l,i)=>{let d=document.createElement("div");d.className="card";d.innerHTML=`<div class="logRatio">${esc(l.ratio)}%</div><div class="logMeta">${esc(l.date)} ${esc(l.event)}<br>${esc(l.machine)} / ${esc(l.tire)}<br>Top ${esc(l.topFmt)} / Virtual ${esc(l.virtualTopFmt)} / Mine ${esc(l.mineFmt)}<br>105% ${esc(l.p105)}　110% ${esc(l.p110)}　115% ${esc(l.p115)}　120% ${esc(l.p120)}<br>${esc(l.memo||"")}</div><button class="inline" onclick="loadOne(${i})">読込</button><button class="inline danger" onclick="delLog(${i})">削除</button>`;$("list").appendChild(d)})}
-function loadOne(i){let logs=JSON.parse(localStorage.getItem(STORE_LOGS)||"[]"),l=logs[i];if(!l)return;$("top").value=l.topRaw;$("virt").value=l.virtRaw;$("mine").value=l.mineRaw;$("event").value=l.event;$("date").value=l.date;$("machine").value=l.machine;$("tire").value=l.tire;$("memo").value=l.memo;saveMeta();calc();showMain()}
-function delLog(i){if(!confirm("このLogを削除しますか？"))return;let logs=JSON.parse(localStorage.getItem(STORE_LOGS)||"[]");logs.splice(i,1);localStorage.setItem(STORE_LOGS,JSON.stringify(logs));loadLogs()}
-function clearLogs(){if(confirm("Logを全削除しますか？")){localStorage.removeItem(STORE_LOGS);loadLogs()}}
-function csvEsc(v){v=(v==null?"":String(v));return `"${v.replace(/"/g,'""')}"`}
-function csv(){let logs=JSON.parse(localStorage.getItem(STORE_LOGS)||"[]"),header=["年月日","大会・練習会","マシン","タイヤ","トップタイム","仮想トップ比","仮想トップタイム","自分タイム","タイム比","105%","110%","115%","120%","メモ","保存日時"],rows=logs.map(l=>[l.date,l.event,l.machine,l.tire,l.topFmt,l.virtRaw,l.virtualTopFmt,l.mineFmt,l.ratio,l.p105,l.p110,l.p115,l.p120,l.memo,l.savedAt]),out=[header,...rows].map(r=>r.map(csvEsc).join(",")).join("\n"),blob=new Blob(["\ufeff"+out],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="motoGYM_calc_log.csv";a.click();URL.revokeObjectURL(a.href)}
+function loadLogs(){
+  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+  $("logList").innerHTML=logs.length?"":"<div class='log'>Logはまだありません</div>";
+  logs.forEach((l,i)=>{
+    let d=document.createElement("div");
+    d.className="log";
+    d.innerHTML=`<b style="font-size:1.5rem">${esc(l.ratio)}%</b><br>
+    ${esc(l.date)} ${esc(l.event)}<br>
+    ${esc(l.machine)} / ${esc(l.tire)}<br>
+    Top ${esc(l.topFmt)} / Virtual ${esc(l.virtualTopFmt)} / Mine ${esc(l.mineFmt)}<br>
+    105% ${esc(l.p105)}　110% ${esc(l.p110)}　115% ${esc(l.p115)}　120% ${esc(l.p120)}<br>
+    ${esc(l.memo||"")}<br>
+    <button onclick="loadOne(${i})">読込</button>
+    <button class="danger" onclick="delLog(${i})">削除</button>`;
+    $("logList").appendChild(d);
+  });
+}
+function loadOne(i){
+  let l=JSON.parse(localStorage.getItem(STORE)||"[]")[i];
+  if(!l)return;
+  $("top").value=l.topRaw;$("virt").value=l.virtRaw;$("mine").value=l.mineRaw;
+  $("event").value=l.event;$("date").value=l.date;$("machine").value=l.machine;$("tire").value=l.tire;$("memo").value=l.memo;
+  saveMeta();calc();showCalc();
+}
+function delLog(i){
+  if(!confirm("このLogを削除しますか？"))return;
+  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+  logs.splice(i,1);
+  localStorage.setItem(STORE,JSON.stringify(logs));
+  loadLogs();
+}
+function clearLogs(){
+  if(confirm("Logを全削除しますか？")){
+    localStorage.removeItem(STORE);
+    loadLogs();
+  }
+}
+function csvEsc(v){return `"${String(v??"").replace(/"/g,'""')}"`}
+function csv(){
+  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+  let header=["年月日","大会・練習会","マシン","タイヤ","トップタイム","仮想トップ比","仮想トップタイム","自分タイム","タイム比","105%","110%","115%","120%","メモ","保存日時"];
+  let rows=logs.map(l=>[l.date,l.event,l.machine,l.tire,l.topFmt,l.virtRaw||"100",l.virtualTopFmt,l.mineFmt,l.ratio,l.p105,l.p110,l.p115,l.p120,l.memo,l.savedAt]);
+  let out=[header,...rows].map(r=>r.map(csvEsc).join(",")).join("\\n");
+  let blob=new Blob(["\\ufeff"+out],{type:"text/csv;charset=utf-8"});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="motoGYM_calc_log.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 loadState();
-</script></body></html>
+</script>
+</body>
+</html>

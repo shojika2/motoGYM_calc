@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.11</title>
+<title>motoGYM_calc v0.0.13</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.11</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.13</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -210,7 +210,17 @@ function loadState(){
   ["event","date","machine","tire","memo"].forEach(k=>{if(m[k]!=null)$(k).value=m[k]});
   calc();
 }
+
+function normalizeDate(v){
+  v=(v||"").trim();
+  if(!v) return "";
+  let m=v.match(/^(\d{4})[\/-]?(\d{1,2})[\/-]?(\d{1,2})$/);
+  if(!m) return v;
+  return `${m[1]}/${String(m[2]).padStart(2,"0")}/${String(m[3]).padStart(2,"0")}`;
+}
+
 function saveMeta(){
+  $("date").value=normalizeDate($("date").value);
   let m={event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value};
   localStorage.setItem(META,JSON.stringify(m));
 }
@@ -235,6 +245,7 @@ function saveLog(){
   if(!c){alert("計算できるタイムを入力してください");return;}
   saveMeta();
   let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+  $("date").value=normalizeDate($("date").value);
   logs.unshift({
     savedAt:new Date().toISOString(),
     event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value,

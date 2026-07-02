@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>モトジムカーナ タイム比計算</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --text:#111827; --muted:#6b7280;
+    --line:#d8dde6; --accent:#2563eb; --danger:#dc2626; --ok:#047857;
+    --shadow:0 8px 24px rgba(15,23,42,.08); --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.45}
+  .wrap{max-width:980px;margin:0 auto;padding:18px 14px 48px}
+  h1{font-size:24px;margin:8px 0 14px;letter-spacing:.02em}
+  h2{font-size:18px;margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:820px){.grid{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  label{display:block;font-weight:700;margin:10px 0 6px;font-size:14px}
+  input,textarea{width:100%;font:inherit;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;color:var(--text)}
+  textarea{min-height:84px;resize:vertical}
+  input:focus,textarea:focus{outline:3px solid rgba(37,99,235,.18);border-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hint{color:var(--muted);font-size:12px;margin-top:5px}
+  .result-main{font-size:42px;font-weight:900;letter-spacing:-.03em;margin:6px 0 2px}
+  .result-sub{font-size:14px;color:var(--muted)}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#1e40af;font-weight:800;font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left;vertical-align:top}
+  th{color:var(--muted);font-size:12px;font-weight:800;white-space:nowrap}
+  .targets td:nth-child(2),.targets th:nth-child(2){text-align:right;font-variant-numeric:tabular-nums}
+  .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  button{appearance:none;border:0;border-radius:12px;padding:11px 14px;font:inherit;font-weight:800;background:var(--accent);color:#fff;cursor:pointer}
+  button.secondary{background:#e5e7eb;color:#111827}
+  button.danger{background:var(--danger)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .status{margin-top:10px;font-size:13px;color:var(--muted)}
+  .log-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+  .scroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:12px}
+  .log-table{min-width:920px;background:#fff}
+  .mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>モトジムカーナ タイム比計算</h1>
+  <div class="grid">
+    <section class="card">
+      <h2>タイム入力</h2>
+      <label for="topTime">トップタイム</label>
+      <input id="topTime" inputmode="decimal" placeholder="例: 79.400 / 1:19.400" />
+      <div class="hint">秒、または 1:19.400 形式で入力できます。</div>
+
+      <label for="virtualRatio">仮想トップ比（%）</label>
+      <input id="virtualRatio" inputmode="decimal" value="100" placeholder="例: 105" />
+      <div class="hint">仮想トップタイム = トップタイム × 仮想トップ比 / 100</div>
+
+      <label for="myTime">自身のタイム</label>
+      <input id="myTime" inputmode="decimal" placeholder="例: 107.103 / 1:47.103" />
+
+      <div class="buttons">
+        <button id="calcBtn">計算</button>
+        <button class="secondary" id="sampleBtn" type="button">サンプル入力</button>
+        <button class="secondary" id="clearInputsBtn" type="button">入力クリア</button>
+      </div>
+      <div id="message" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>計算結果</h2>
+      <div class="pill">現在のタイム比</div>
+      <div id="ratioOut" class="result-main">--.-%</div>
+      <div id="ratioSub" class="result-sub">トップタイムと自身のタイムを入力してください。</div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+      <table class="targets">
+        <thead><tr><th>基準</th><th>タイム</th></tr></thead>
+        <tbody id="targetRows">
+          <tr><td>105%</td><td>--</td></tr>
+          <tr><td>110%</td><td>--</td></tr>
+          <tr><td>115%</td><td>--</td></tr>
+          <tr><td>120%</td><td>--</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card wide">
+      <h2>Logコメント</h2>
+      <div class="row">
+        <div><label for="eventName">大会・練習会名</label><input id="eventName" placeholder="例: 関東事務茶屋杯 第2戦" /></div>
+        <div><label for="eventDate">年月日</label><input id="eventDate" type="date" /></div>
+      </div>
+      <div class="row">
+        <div><label for="machineName">マシン名</label><input id="machineName" placeholder="例: GSX-8S" /></div>
+        <div><label for="tireName">タイヤ銘柄</label><input id="tireName" placeholder="例: DUNLOP Q5" /></div>
+      </div>
+      <label for="freeNote">その他フリー入力事項</label>
+      <textarea id="freeNote" placeholder="路面、気温、空気圧、セッティング、課題など"></textarea>
+      <div class="buttons">
+        <button id="saveBtn">Log保存</button>
+        <button class="secondary" id="csvBtn">CSV出力</button>
+        <button class="danger" id="deleteAllBtn">Log全削除</button>
+      </div>
+      <div class="status">保存上限は99件です。100件目を保存すると一番古いLogを自動削除します。</div>
+    </section>
+
+    <section class="card wide">
+      <div class="log-head">
+        <h2 style="margin:0">Log <span id="logCount" class="hint"></span></h2>
+      </div>
+      <div class="scroll">
+        <table class="log-table">
+          <thead><tr>
+            <th>#</th><th>保存日時</th><th>年月日</th><th>大会・練習会名</th><th>マシン</th><th>タイヤ</th>
+            <th>トップ</th><th>仮想%</th><th>仮想トップ</th><th>自身</th><th>比率</th><th>105/110/115/120%</th><th>メモ</th><th></th>
+          </tr></thead>
+          <tbody id="logRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(() => {
+  'use strict';
+  const KEY = 'motogymkhana-time-ratio-log-v1';
+  const MAX_LOGS = 99;
+  const $ = id => document.getElementById(id);
+  const ids = ['topTime','virtualRatio','myTime','eventName','eventDate','machineName','tireName','freeNote'];
+
+  function parseTime(v){
+    v = String(v || '').trim().replace(/[，,]/g,'.');
+    if(!v) return NaN;
+    if(v.includes(':')){
+      const p = v.split(':').map(s => s.trim());
+      if(p.length !== 2) return NaN;
+      const m = Number(p[0]); const s = Number(p[1]);
+      if(!Number.isFinite(m) || !Number.isFinite(s) || m < 0 || s < 0) return NaN;
+      return m * 60 + s;
+    }
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : NaN;
+  }
+  function fmtTime(sec){
+    if(!Number.isFinite(sec) || sec <= 0) return '--';
+    const m = Math.floor(sec / 60);
+    const s = sec - m * 60;
+    return m > 0 ? `${m}:${s.toFixed(3).padStart(6,'0')}` : `${s.toFixed(3)}秒`;
+  }
+  function fmtPct(n){ return Number.isFinite(n) ? `${n.toFixed(3)}%` : '--'; }
+  function calc(){
+    const top = parseTime($('topTime').value);
+    const vr = Number(String($('virtualRatio').value || '').replace(/[，,]/g,'.'));
+    const mine = parseTime($('myTime').value);
+    const ok = Number.isFinite(top) && top > 0 && Number.isFinite(vr) && vr > 0 && Number.isFinite(mine) && mine > 0;
+    const virtualTop = Number.isFinite(top) && Number.isFinite(vr) && vr > 0 ? top * vr / 100 : NaN;
+    const ratio = ok ? mine / virtualTop * 100 : NaN;
+    const targets = [105,110,115,120].map(p => ({pct:p, time: virtualTop * p / 100}));
+    return {top, vr, mine, virtualTop, ratio, targets, ok};
+  }
+  function renderCalc(){
+    const c = calc();
+    $('targetRows').innerHTML = c.targets.map(t => `<tr><td>${t.pct}%</td><td class="mono">${fmtTime(t.time)}</td></tr>`).join('');
+    $('ratioOut').textContent = fmtPct(c.ratio);
+    if(c.ok){
+      $('ratioSub').textContent = `仮想トップ ${fmtTime(c.virtualTop)} に対して、自身 ${fmtTime(c.mine)}。`;
+      $('message').textContent = '';
+    } else {
+      $('ratioSub').textContent = 'トップタイム、仮想トップ比、自身のタイムを入力してください。';
+    }
+  }
+  function loadLogs(){
+    try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
+  }
+  function saveLogs(logs){ localStorage.setItem(KEY, JSON.stringify(logs.slice(0, MAX_LOGS))); }
+  function escapeHtml(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+  function renderLogs(){
+    const logs = loadLogs();
+    $('logCount').textContent = `(${logs.length}/${MAX_LOGS})`;
+    $('logRows').innerHTML = logs.map((l,i) => `
+      <tr>
+        <td>${i+1}</td><td class="mono">${escapeHtml(l.savedAt)}</td><td>${escapeHtml(l.eventDate)}</td><td>${escapeHtml(l.eventName)}</td>
+        <td>${escapeHtml(l.machineName)}</td><td>${escapeHtml(l.tireName)}</td>
+        <td class="mono">${fmtTime(l.top)}</td><td class="mono">${escapeHtml(l.virtualRatio)}%</td><td class="mono">${fmtTime(l.virtualTop)}</td>
+        <td class="mono">${fmtTime(l.mine)}</td><td class="mono">${fmtPct(l.ratio)}</td>
+        <td class="mono">${[105,110,115,120].map(p=>p+':'+fmtTime(l.virtualTop*p/100)).join(' / ')}</td>
+        <td>${escapeHtml(l.freeNote)}</td><td><button class="secondary" data-del="${i}">削除</button></td>
+      </tr>`).join('') || '<tr><td colspan="14" class="hint">まだLogがありません。</td></tr>';
+  }
+  function addLog(){
+    const c = calc();
+    if(!c.ok){ $('message').textContent = '数値を確認してください。タイムは秒または 1:19.400 形式で入力できます。'; return; }
+    const log = {
+      savedAt: new Date().toLocaleString('ja-JP'), eventDate:$('eventDate').value, eventName:$('eventName').value,
+      machineName:$('machineName').value, tireName:$('tireName').value, freeNote:$('freeNote').value,
+      top:c.top, virtualRatio:c.vr, virtualTop:c.virtualTop, mine:c.mine, ratio:c.ratio
+    };
+    const logs = [log, ...loadLogs()].slice(0, MAX_LOGS);
+    saveLogs(logs); renderLogs(); $('message').textContent = 'Logを保存しました。';
+  }
+  function csvEscape(v){ return '"' + String(v ?? '').replace(/"/g,'""') + '"'; }
+  function exportCsv(){
+    const logs = loadLogs();
+    if(!logs.length){ $('message').textContent = '出力するLogがありません。'; return; }
+    const header = ['保存日時','年月日','大会・練習会名','マシン名','タイヤ銘柄','トップタイム秒','トップタイム表示','仮想トップ比%','仮想トップ秒','仮想トップ表示','自身タイム秒','自身タイム表示','タイム比%','105%','110%','115%','120%','その他フリー入力事項'];
+    const rows = logs.map(l => [
+      l.savedAt,l.eventDate,l.eventName,l.machineName,l.tireName,l.top,fmtTime(l.top),l.virtualRatio,l.virtualTop,fmtTime(l.virtualTop),l.mine,fmtTime(l.mine),l.ratio.toFixed(3),
+      fmtTime(l.virtualTop*1.05),fmtTime(l.virtualTop*1.10),fmtTime(l.virtualTop*1.15),fmtTime(l.virtualTop*1.20),l.freeNote
+    ]);
+    const csv = '\ufeff' + [header, ...rows].map(r => r.map(csvEscape).join(',')).join('\r\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `motogymkhana_time_ratio_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  ids.forEach(id => $(id).addEventListener('input', renderCalc));
+  $('calcBtn').addEventListener('click', renderCalc);
+  $('saveBtn').addEventListener('click', addLog);
+  $('csvBtn').addEventListener('click', exportCsv);
+  $('sampleBtn').addEventListener('click', () => {
+    $('topTime').value='1:19.400'; $('virtualRatio').value='100'; $('myTime').value='1:47.103';
+    $('eventName').value='練習会'; $('eventDate').value=new Date().toISOString().slice(0,10); $('machineName').value='GSX-8S'; $('tireName').value='Q5';
+    $('freeNote').value='サンプル。高速レイアウト、回転課題あり。'; renderCalc();
+  });
+  $('clearInputsBtn').addEventListener('click', () => { ['topTime','myTime'].forEach(id => $(id).value=''); $('virtualRatio').value='100'; renderCalc(); });
+  $('deleteAllBtn').addEventListener('click', () => { if(confirm('Logを全削除しますか？')){ localStorage.removeItem(KEY); renderLogs(); } });
+  $('logRows').addEventListener('click', e => {
+    const idx = e.target?.dataset?.del;
+    if(idx !== undefined){ const logs = loadLogs(); logs.splice(Number(idx),1); saveLogs(logs); renderLogs(); }
+  });
+  renderCalc(); renderLogs();
+})();
+</script>
+</body>
+</html>

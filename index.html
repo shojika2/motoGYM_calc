@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.21</title>
+<title>motoGYM_calc v0.0.22</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.21</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.22</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -69,6 +69,7 @@ button.danger{background:#c94455}
 
 <button id="clearBtn" class="secondary">入力値をクリア</button>
 <button id="saveBtn">この計算結果を保存</button>
+<button id="imageBtn" class="secondary">計算結果を画像保存</button>
 <button class="secondary" onclick="showLog()">Log画面</button>
 <div style="margin:28px 0 8px;text-align:center;color:#888;font-size:0.85rem;line-height:1.5">&copy; 2026 Shoji Katsu. All Rights Reserved.</div>
 </div>
@@ -388,6 +389,115 @@ if(cm)cm.onclick=()=>{
    if(d&&d.value)d.value=normalizeDate(d.value);
  });
 });
+
+
+document.getElementById("imageBtn").onclick=async function(){
+  const c=calc();
+  if(!c){alert("計算できるタイムを入力してください");return;}
+
+  const W=1080,H=1500;
+  const canvas=document.createElement("canvas");
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext("2d");
+
+  ctx.fillStyle="#111111";
+  ctx.fillRect(0,0,W,H);
+
+  function text(s,x,y,size,color="#ffffff",align="left",weight="400"){
+    ctx.fillStyle=color;
+    ctx.font=`${weight} ${size}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign=align;
+    ctx.fillText(s,x,y);
+  }
+  function roundRect(x,y,w,h,r,fill){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+    ctx.fillStyle=fill;
+    ctx.fill();
+  }
+
+  const event=$("event")?.value||"";
+  const date=normalizeDate($("date")?.value||"");
+  const machine=$("machine")?.value||"";
+  const tire=$("tire")?.value||"";
+  const memo=$("memo")?.value||"";
+  const vp=readVirt();
+
+  text("motoGYM_calc",60,90,48,"#ffffff","left","800");
+  text("v0.0.22",1020,90,28,"#aaaaaa","right","600");
+
+  let y=155;
+  if(date||event){
+    text([date,event].filter(Boolean).join("  "),60,y,34,"#dddddd","left","600"); y+=48;
+  }
+  if(machine||tire){
+    text([machine,tire].filter(Boolean).join(" / "),60,y,32,"#bbbbbb","left","500"); y+=48;
+  }
+
+  roundRect(50,y,980,560,34,"#20242d");
+  y+=78;
+
+  text("自分のタイム",540,y,40,"#bbbbbb","center","700"); y+=88;
+  text(fmt(c.mine.sec),540,y,104,"#ffffff","center","900"); y+=120;
+
+  text("タイム比",540,y,40,"#bbbbbb","center","700"); y+=92;
+  text(c.ratio.toFixed(2)+" %",540,y,118,"#7fd0ff","center","900"); y+=92;
+
+  text("トップ",170,y,34,"#bbbbbb","center","700");
+  text(fmt(c.top.sec),170,y+54,46,"#ffffff","center","800");
+
+  if(Math.abs(vp-100)>0.000001){
+    text("仮想トップ",540,y,34,"#bbbbbb","center","700");
+    text(fmt(c.virtualTop),540,y+54,46,"#ffffff","center","800");
+  }
+
+  text("自分",910,y,34,"#bbbbbb","center","700");
+  text(fmt(c.mine.sec),910,y+54,46,"#ffffff","center","800");
+
+  y+=130;
+  roundRect(50,y,980,350,34,"#20242d");
+  y+=74;
+  const targets=[
+    ["105%",fmt(c.virtualTop*1.05)],
+    ["110%",fmt(c.virtualTop*1.10)],
+    ["115%",fmt(c.virtualTop*1.15)],
+    ["120%",fmt(c.virtualTop*1.20)]
+  ];
+  targets.forEach((row,i)=>{
+    const yy=y+i*68;
+    text(row[0],180,yy,42,"#bbbbbb","center","800");
+    text(row[1],700,yy,54,"#ffffff","center","900");
+  });
+
+  y+=targets.length*68+40;
+  if(memo){
+    roundRect(50,y,980,160,24,"#1b1f27");
+    text("メモ",80,y+48,30,"#aaaaaa","left","700");
+    const m=memo.length>56?memo.slice(0,56)+"…":memo;
+    text(m,80,y+98,34,"#ffffff","left","500");
+    y+=190;
+  }
+
+  text("© 2026 Shoji Katsu. All Rights Reserved.",540,H-62,28,"#888888","center","500");
+
+  canvas.toBlob(async blob=>{
+    const fileName="motoGYM_calc_result.png";
+    if(navigator.canShare && navigator.canShare({files:[new File([blob],fileName,{type:"image/png"})]})){
+      const file=new File([blob],fileName,{type:"image/png"});
+      try{await navigator.share({files:[file],title:"motoGYM_calc"});return;}catch(e){}
+    }
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  },"image/png");
+};
 
 loadState();
 </script>

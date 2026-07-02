@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.14</title>
+<title>motoGYM_calc v0.0.15</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.14</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.15</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -74,12 +74,13 @@ button.danger{background:#c94455}
 
 <div id="savePage" class="hidden">
 <h3>保存情報</h3>
-<label>大会・練習会名</label><div style="display:flex;gap:6px"><input style="flex:1" id="event">
-<label>年月日</label><div style="display:flex;gap:6px"><input style="flex:1" id="date" inputmode="numeric">
-<label>マシン名</label><div style="display:flex;gap:6px"><input style="flex:1" id="machine">
-<label>タイヤ銘柄</label><div style="display:flex;gap:6px"><input style="flex:1" id="tire">
-<label>その他フリー入力事項</label><div style="display:flex;gap:6px;align-items:flex-start"><textarea style="flex:1" id="memo"></textarea><button type="button" id="clr_memo" style="width:64px;height:48px">×</button></div>
-<button id="clearMeta" class="secondary" type="button">保存情報を全クリア</button><button onclick="saveLog()">保存する</button>
+<label>大会・練習会名</label><div style="display:flex;gap:8px;align-items:center"><input id="event" style="flex:1"><button type="button" id="clr_event" style="width:56px">×</button></div>
+<label>年月日</label><div style="display:flex;gap:8px;align-items:center"><input id="date" inputmode="numeric" style="flex:1"><button type="button" id="clr_date" style="width:56px">×</button></div>
+<label>マシン名</label><div style="display:flex;gap:8px;align-items:center"><input id="machine" style="flex:1"><button type="button" id="clr_machine" style="width:56px">×</button></div>
+<label>タイヤ銘柄</label><div style="display:flex;gap:8px;align-items:center"><input id="tire" style="flex:1"><button type="button" id="clr_tire" style="width:56px">×</button></div>
+<label>その他フリー入力事項</label><div style="display:flex;gap:8px;align-items:flex-start"><textarea id="memo" style="flex:1"></textarea><button type="button" id="clr_memo" style="width:56px;height:48px">×</button></div>
+<button onclick="saveLog()">保存する</button>
+<button id="clearMeta" class="secondary" type="button">保存情報を全クリア</button>
 <button class="secondary" onclick="hideSave()">戻る</button>
 </div>
 

@@ -1,147 +1,123 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>motoGYM_calc v0.0.01</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>motoGYM_calc v0.0.02</title>
 <style>
-  :root{
-    --bg:#0f172a; --card:#111827; --card2:#1f2937; --text:#f8fafc; --muted:#cbd5e1;
-    --accent:#38bdf8; --accent2:#22c55e; --danger:#fb7185; --line:#334155;
-    --input:#020617;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-    background:linear-gradient(180deg,#0f172a,#020617); color:var(--text);
-    font-size:18px; line-height:1.45; -webkit-text-size-adjust:100%;
-  }
-  .app{width:min(100%,720px); margin:0 auto; padding:14px 12px 32px;}
-  header{position:sticky;top:0;z-index:10;background:rgba(15,23,42,.94);backdrop-filter:blur(10px);padding:10px 0 12px;border-bottom:1px solid var(--line)}
-  h1{font-size:26px;margin:0 0 2px;letter-spacing:.02em}.ver{font-size:14px;color:var(--muted)}
-  .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
-  button{border:0;border-radius:14px;padding:13px 12px;font-size:18px;font-weight:700;color:var(--text);background:var(--card2)}
-  button.active{background:var(--accent);color:#001018}.primary{background:var(--accent2);color:#02130a}.danger{background:var(--danger);color:#23020a}.ghost{background:#334155}.wide{width:100%}
-  .screen{display:none}.screen.active{display:block}.card{background:rgba(17,24,39,.94);border:1px solid var(--line);border-radius:18px;padding:14px;margin:14px 0;box-shadow:0 8px 24px rgba(0,0,0,.24)}
-  label{display:block;font-size:16px;color:var(--muted);margin:12px 0 6px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  input,textarea{width:100%;font-size:20px;color:var(--text);background:var(--input);border:1px solid #475569;border-radius:14px;padding:12px 12px;outline:none}textarea{min-height:86px;resize:vertical;font-size:18px}input:focus,textarea:focus{border-color:var(--accent)}
-  .resultBig{text-align:center;font-size:42px;font-weight:900;margin:8px 0;color:#7dd3fc}.sub{color:var(--muted);font-size:15px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.pill{background:#020617;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}.pill b{font-size:24px;display:block}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.logItem{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:#020617}.logTop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.logRatio{font-size:28px;font-weight:900;color:#7dd3fc}.small{font-size:14px;color:var(--muted)}.kv{margin-top:8px;font-size:15px;color:#e2e8f0}.empty{text-align:center;color:var(--muted);padding:28px 8px}.nowrap{white-space:nowrap}
-  @media(max-width:430px){body{font-size:17px}.app{padding:10px 10px 24px}h1{font-size:24px}input{font-size:19px}.resultBig{font-size:38px}.row,.row3{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}button{font-size:17px;padding:12px 10px}}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:0;background:#111;color:#fff}
+header{padding:12px;background:#222;text-align:center;font-size:1.4rem;font-weight:bold}
+small{display:block;color:#bbb}
+.page{padding:14px;max-width:520px;margin:auto}
+label{display:block;margin-top:12px;font-size:1.05rem}
+input,textarea{width:100%;font-size:1.25rem;padding:10px;box-sizing:border-box}
+button{width:100%;padding:14px;margin-top:10px;font-size:1.1rem}
+.card{background:#222;padding:10px;margin:8px 0;border-radius:8px}
+.hidden{display:none}
+.result{font-size:1.5rem;font-weight:bold}
+table{width:100%}
+td{padding:3px}
 </style>
 </head>
 <body>
-<div class="app">
-<header>
-  <h1>motoGYM_calc</h1>
-  <div class="ver">v0.0.01</div>
-  <div class="tabs">
-    <button id="tabCalc" class="active" onclick="showScreen('calc')">計算</button>
-    <button id="tabLog" onclick="showScreen('log')">Log</button>
-  </div>
-</header>
+<header>motoGYM_calc<small>v0.0.02</small></header>
 
-<main id="calcScreen" class="screen active">
-  <section class="card">
-    <div class="row3">
-      <div><label>トップタイム</label><input id="topTime" inputmode="decimal" placeholder="例 79.400"></div>
-      <div><label>仮想トップ比 %</label><input id="virtualRatio" inputmode="decimal" placeholder="例 100"></div>
-      <div><label>自身のタイム</label><input id="myTime" inputmode="decimal" placeholder="例 107.103"></div>
-    </div>
-    <div class="resultBig" id="ratioOut">---%</div>
-    <div class="sub" id="virtualTopOut">仮想トップタイム：---</div>
-  </section>
+<div id="main" class="page">
+<label>トップタイム</label><input id="top" inputmode="numeric">
+<label>仮想トップ比(%)</label><input id="virt" inputmode="decimal" value="100">
+<label>自分のタイム</label><input id="mine" inputmode="numeric">
+<div class="card">
+<div class="result" id="ratio">-- %</div>
+<table id="tbl"></table>
+</div>
+<h3>保存情報</h3>
+<input id="event" placeholder="大会・練習会">
+<input id="date" placeholder="年月日">
+<input id="machine" placeholder="マシン">
+<input id="tire" placeholder="タイヤ">
+<textarea id="memo" placeholder="メモ"></textarea>
+<button id="save">保存</button>
+<button onclick="showLog()">Log画面</button>
+</div>
 
-  <section class="card">
-    <h2 style="font-size:20px;margin:0 0 10px">基準タイム</h2>
-    <div class="grid">
-      <div class="pill"><span>105%</span><b id="t105">---</b></div>
-      <div class="pill"><span>110%</span><b id="t110">---</b></div>
-      <div class="pill"><span>115%</span><b id="t115">---</b></div>
-      <div class="pill"><span>120%</span><b id="t120">---</b></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2 style="font-size:20px;margin:0 0 10px">Log用コメント</h2>
-    <label>大会・練習会名</label><input id="eventName" placeholder="例 関東事務茶屋杯 第2戦">
-    <label>年月日</label><input id="eventDate" type="date">
-    <label>マシン名</label><input id="machine" placeholder="例 GSX-8S">
-    <label>タイヤ銘柄</label><input id="tire" placeholder="例 DUNLOP Q5">
-    <label>その他フリー入力事項</label><textarea id="freeText" placeholder="路面、空気圧、課題、セッティングなど"></textarea>
-    <button class="primary wide" onclick="saveLog()">この結果をLog保存</button>
-    <div class="small" id="saveMsg"></div>
-  </section>
-</main>
-
-<main id="logScreen" class="screen">
-  <section class="card">
-    <div class="actions">
-      <button class="primary" onclick="exportCSV()">CSV保存</button>
-      <button class="danger" onclick="clearLogs()">Log全削除</button>
-    </div>
-    <div class="small" style="margin-top:10px">保存上限：99件 / 現在 <span id="logCount">0</span> 件</div>
-  </section>
-  <section id="logList"></section>
-</main>
+<div id="logs" class="page hidden">
+<button onclick="showMain()">戻る</button>
+<button onclick="csv()">CSV出力</button>
+<button onclick="if(confirm('全削除')){localStorage.removeItem('mgc_logs');loadLogs()}">全削除</button>
+<div id="list"></div>
 </div>
 
 <script>
-const APP_KEY='motoGYM_calc_logs_v00001';
-const ratios=[105,110,115,120];
-function n(id){return parseFloat(document.getElementById(id).value.replace(',', '.'));}
-function fmt(t){return Number.isFinite(t)? t.toFixed(3) : '---';}
+const ids=["top","virt","mine","event","date","machine","tire","memo"];
+function parse(v){
+ v=(v||"").replace(/\D/g,"");
+ if(!v)return null;
+ if(v.length<=5){
+   let s=parseInt(v.slice(0,-3)||0),ms=v.slice(-3).padStart(3,"0");
+   return s+Number(ms)/1000;
+ }
+ let ms=v.slice(-3),sec=v.slice(-5,-3),min=v.slice(0,-5);
+ return parseInt(min)*60+parseInt(sec)+Number(ms)/1000;
+}
+function fmt(t){
+ if(t==null)return "--";
+ let m=Math.floor(t/60),s=Math.floor(t%60),ms=Math.round((t%1)*1000);
+ return m?`${m}:${String(s).padStart(2,"0")}.${String(ms).padStart(3,"0")}`:`${s}.${String(ms).padStart(3,"0")}`;
+}
 function calc(){
-  const top=n('topTime'), vr=n('virtualRatio'), my=n('myTime');
-  const virtualTop = (Number.isFinite(top)&&Number.isFinite(vr)&&vr>0) ? top/(vr/100) : top;
-  document.getElementById('virtualTopOut').textContent='仮想トップタイム：'+fmt(virtualTop);
-  ratios.forEach(r=>document.getElementById('t'+r).textContent=fmt(virtualTop*r/100));
-  const ratio=(Number.isFinite(my)&&Number.isFinite(virtualTop)&&virtualTop>0)? my/virtualTop*100 : NaN;
-  document.getElementById('ratioOut').textContent=Number.isFinite(ratio)? ratio.toFixed(2)+'%' : '---%';
-  return {top,vr,my,virtualTop,ratio};
+ let top=parse(topEl.value),me=parse(mineEl.value),v=parseFloat(virtEl.value)||100;
+ if(!top||!me)return;
+ let vt=top/(v/100),r=me/vt*100;
+ ratio.textContent=r.toFixed(2)+" %";
+ let h="";
+ [105,110,115,120].forEach(p=>h+=`<tr><td>${p}%</td><td>${fmt(vt*p/100)}</td></tr>`);
+ tbl.innerHTML=h;
+ saveState();
 }
-['topTime','virtualRatio','myTime'].forEach(id=>document.getElementById(id).addEventListener('input',calc));
-function logs(){try{return JSON.parse(localStorage.getItem(APP_KEY)||'[]')}catch(e){return []}}
-function setLogs(a){localStorage.setItem(APP_KEY,JSON.stringify(a.slice(0,99)));}
-function saveLog(){
-  const c=calc();
-  if(!Number.isFinite(c.top)||!Number.isFinite(c.my)||!Number.isFinite(c.virtualTop)||c.virtualTop<=0){document.getElementById('saveMsg').textContent='トップタイムと自身のタイムを入力してください。';return;}
-  const item={savedAt:new Date().toISOString(),topTime:c.top,virtualRatio:Number.isFinite(c.vr)?c.vr:'',virtualTop:c.virtualTop,myTime:c.my,ratio:c.ratio,t105:c.virtualTop*1.05,t110:c.virtualTop*1.10,t115:c.virtualTop*1.15,t120:c.virtualTop*1.20,eventName:v('eventName'),eventDate:v('eventDate'),machine:v('machine'),tire:v('tire'),freeText:v('freeText')};
-  const a=logs(); a.unshift(item); setLogs(a);
-  document.getElementById('saveMsg').textContent='Logに保存しました。'; renderLogs();
+function saveState(){let o={};ids.forEach(i=>o[i]=document.getElementById(i).value);localStorage.setItem("mgc_state",JSON.stringify(o));}
+function loadState(){let o=JSON.parse(localStorage.getItem("mgc_state")||"{}");ids.forEach(i=>{if(o[i]!=null)document.getElementById(i).value=o[i]});calc();}
+const topEl=top,mineEl=mine,virtEl=virt;
+ids.forEach(i=>document.getElementById(i).addEventListener("input",calc));
+[top,mine].forEach((e,i)=>e.addEventListener("change",()=>{if(i==0)virt.focus();else if(i==1)event.focus();}));
+virt.addEventListener("change",()=>mine.focus());
+save.onclick=()=>{
+ let logs=JSON.parse(localStorage.getItem("mgc_logs")||"[]");
+ let topv=parse(top.value),me=parse(mine.value),vt=topv/(parseFloat(virt.value)/100),ratioV=(me/vt*100).toFixed(2);
+ logs.unshift({event:event.value,date:date.value,machine:machine.value,tire:tire.value,memo:memo.value,top:top.value,virt:virt.value,mine:mine.value,ratio:ratioV});
+ logs=logs.slice(0,99);
+ localStorage.setItem("mgc_logs",JSON.stringify(logs));
+ alert("保存しました");
+};
+function showLog(){main.classList.add("hidden");logs.classList.remove("hidden");loadLogs();}
+function showMain(){logs.classList.add("hidden");main.classList.remove("hidden");}
+function loadLogs(){
+ let logs=JSON.parse(localStorage.getItem("mgc_logs")||"[]");
+ list.innerHTML="";
+ logs.forEach((l,i)=>{
+ let d=document.createElement("div");d.className="card";
+ d.innerHTML=`<div style="font-size:1.4rem">${l.ratio}%</div>${l.date} ${l.event}<br>${l.machine} ${l.tire}<br>
+ <button onclick='loadOne(${i})'>読込</button>
+ <button onclick='del(${i})'>削除</button>`;
+ list.appendChild(d);
+ });
 }
-function v(id){return document.getElementById(id).value.trim();}
-function showScreen(s){
-  document.getElementById('calcScreen').classList.toggle('active',s==='calc');
-  document.getElementById('logScreen').classList.toggle('active',s==='log');
-  document.getElementById('tabCalc').classList.toggle('active',s==='calc');
-  document.getElementById('tabLog').classList.toggle('active',s==='log');
-  if(s==='log')renderLogs();
+function loadOne(i){
+ let l=JSON.parse(localStorage.getItem("mgc_logs"))[i];
+ top.value=l.top;virt.value=l.virt;mine.value=l.mine;event.value=l.event;date.value=l.date;machine.value=l.machine;tire.value=l.tire;memo.value=l.memo;
+ calc();showMain();
 }
-function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
-function renderLogs(){
-  const a=logs(); document.getElementById('logCount').textContent=a.length;
-  const list=document.getElementById('logList');
-  if(!a.length){list.innerHTML='<div class="card empty">Logはまだありません。</div>';return;}
-  list.innerHTML=a.map((x,i)=>`<div class="logItem">
-    <div class="logTop"><div><b>${esc(x.eventName||'名称未入力')}</b><div class="small">${esc(x.eventDate||'日付未入力')} / ${esc(x.machine||'マシン未入力')} / ${esc(x.tire||'タイヤ未入力')}</div></div><div class="logRatio nowrap">${Number(x.ratio).toFixed(2)}%</div></div>
-    <div class="kv">Top ${fmt(Number(x.topTime))} / 仮想Top ${fmt(Number(x.virtualTop))} / 自分 ${fmt(Number(x.myTime))}</div>
-    <div class="small">105% ${fmt(Number(x.t105))}　110% ${fmt(Number(x.t110))}　115% ${fmt(Number(x.t115))}　120% ${fmt(Number(x.t120))}</div>
-    ${x.freeText?`<div class="kv">${esc(x.freeText).replace(/\n/g,'<br>')}</div>`:''}
-    <button class="ghost wide" style="margin-top:10px" onclick="deleteLog(${i})">このLogを削除</button>
-  </div>`).join('');
+function del(i){
+ let a=JSON.parse(localStorage.getItem("mgc_logs"));a.splice(i,1);
+ localStorage.setItem("mgc_logs",JSON.stringify(a));loadLogs();
 }
-function deleteLog(i){const a=logs();a.splice(i,1);setLogs(a);renderLogs();}
-function clearLogs(){if(confirm('Logを全て削除しますか？')){setLogs([]);renderLogs();}}
-function csvCell(v){return '"'+String(v??'').replace(/"/g,'""')+'"';}
-function exportCSV(){
-  const a=logs(); if(!a.length){alert('出力するLogがありません。');return;}
-  const head=['保存日時','大会・練習会名','年月日','マシン名','タイヤ銘柄','トップタイム','仮想トップ比%','仮想トップタイム','自身のタイム','タイム比%','105%','110%','115%','120%','その他フリー入力事項'];
-  const rows=a.map(x=>[x.savedAt,x.eventName,x.eventDate,x.machine,x.tire,fmt(Number(x.topTime)),x.virtualRatio,fmt(Number(x.virtualTop)),fmt(Number(x.myTime)),Number(x.ratio).toFixed(2),fmt(Number(x.t105)),fmt(Number(x.t110)),fmt(Number(x.t115)),fmt(Number(x.t120)),x.freeText]);
-  const csv='\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const aTag=document.createElement('a');
-  aTag.href=url; aTag.download='motoGYM_calc_log.csv'; document.body.appendChild(aTag); aTag.click(); aTag.remove(); URL.revokeObjectURL(url);
+function csv(){
+ let a=JSON.parse(localStorage.getItem("mgc_logs")||"[]");
+ let out="年月日,大会,マシン,タイヤ,トップ,仮想比,自分,タイム比,メモ\n";
+ a.forEach(l=>out+=`${l.date},${l.event},${l.machine},${l.tire},${l.top},${l.virt},${l.mine},${l.ratio},${(l.memo||"").replace(/,/g," ")}\n`);
+ let blob=new Blob(["\ufeff"+out],{type:"text/csv"});
+ let x=document.createElement("a");x.href=URL.createObjectURL(blob);x.download="motoGYM_calc_log.csv";x.click();
 }
-window.addEventListener('load',()=>{calc();renderLogs();});
+loadState();
 </script>
 </body>
 </html>

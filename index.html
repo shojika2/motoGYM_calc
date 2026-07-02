@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.08</title>
+<title>motoGYM_calc v0.0.12</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,20 +31,20 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.08</small></h2>
+<h2 id="appTitle" style="cursor:pointer">motoGYM_calc<br><small>v0.0.12</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
-<input id="top" inputmode="numeric" pattern="[0-9]*" placeholder="例 109678">
+<div style="display:flex;gap:6px"><input style="flex:1" id="top" inputmode="numeric" pattern="[0-9]*" placeholder="例 109678"><button type="button" id="clrTop" style="width:64px">×</button></div>
 <div id="topRead" class="read">認識: --</div>
 <div class="note">例：59.321秒 → 059321 / 1:23.400 → 1234 / 1:59.600 → 1596</div>
 
 <label>仮想トップ比(%)</label>
-<input id="virt" inputmode="decimal" placeholder="空白=100%">
+<div style="display:flex;gap:6px"><input style="flex:1" id="virt" inputmode="decimal" placeholder="空白=100%"><button type="button" id="clrVirt" style="width:64px">×</button></div>
 <div class="note">空白の場合は100%として計算します。</div>
 
 <label>自分のタイム</label>
-<input id="mine" inputmode="numeric" pattern="[0-9]*" placeholder="例 118245">
+<div style="display:flex;gap:6px"><input style="flex:1" id="mine" inputmode="numeric" pattern="[0-9]*" placeholder="例 118245"><button type="button" id="clrMine" style="width:64px">×</button></div>
 <div id="mineRead" class="read">認識: --</div>
 <div class="note">末尾の0は省略可。例：2:05.120 → 20512 / 2:05.000 → 205</div>
 
@@ -66,6 +66,8 @@ button.danger{background:#c94455}
 <div class="card">120%<br><b id="p120">--</b></div>
 </div>
 
+
+<button id="clearBtn" class="secondary">入力値をクリア</button>
 <button id="saveBtn">この計算結果を保存</button>
 <button class="secondary" onclick="showLog()">Log画面</button>
 </div>
@@ -308,6 +310,38 @@ function csv(){
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+
+
+["clrTop","clrVirt","clrMine"].forEach((id,idx)=>{
+ document.getElementById(id).onclick=()=>{
+   const target=["top","virt","mine"][idx];
+   document.getElementById(target).value="";
+   calc();
+ };
+});
+document.getElementById("clearBtn").textContent="全入力クリア";
+
+document.getElementById("clearBtn").onclick=function(){
+ if(!confirm("入力値をクリアしますか？")) return;
+ ["top","virt","mine"].forEach(id=>document.getElementById(id).value="");
+ calc();
+ try{localStorage.removeItem(STATE);}catch(e){}
+};
+
+
+function showVersion(){
+  ["calcPage","savePage","logPage"].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e)e.classList.add("hidden");
+  });
+  document.getElementById("versionPage").classList.remove("hidden");
+}
+function hideVersion(){
+  document.getElementById("versionPage").classList.add("hidden");
+  document.getElementById("calcPage").classList.remove("hidden");
+}
+document.getElementById("appTitle").onclick=showVersion;
 
 loadState();
 </script>

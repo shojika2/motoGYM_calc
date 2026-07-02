@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.12</title>
+<title>motoGYM_calc v0.0.11</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2 id="appTitle" style="cursor:pointer">motoGYM_calc<br><small>v0.0.12</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.11</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -328,20 +328,6 @@ document.getElementById("clearBtn").onclick=function(){
  calc();
  try{localStorage.removeItem(STATE);}catch(e){}
 };
-
-
-function showVersion(){
-  ["calcPage","savePage","logPage"].forEach(id=>{
-    const e=document.getElementById(id);
-    if(e)e.classList.add("hidden");
-  });
-  document.getElementById("versionPage").classList.remove("hidden");
-}
-function hideVersion(){
-  document.getElementById("versionPage").classList.add("hidden");
-  document.getElementById("calcPage").classList.remove("hidden");
-}
-document.getElementById("appTitle").onclick=showVersion;
 
 loadState();
 </script>

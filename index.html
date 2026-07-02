@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.22</title>
+<title>motoGYM_calc v0.0.23</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.22</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.23</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -354,9 +354,15 @@ document.getElementById("clearBtn").textContent="全入力クリア";
 
 document.getElementById("clearBtn").onclick=function(){
  if(!confirm("入力値をクリアしますか？")) return;
- ["top","virt","mine"].forEach(id=>document.getElementById(id).value="");
+ ["top","virt","mine","event","date","machine","tire","memo"].forEach(id=>{
+   const e=document.getElementById(id);
+   if(e)e.value="";
+ });
  calc();
- try{localStorage.removeItem(STATE);}catch(e){}
+ try{
+   localStorage.removeItem(STATE);
+   localStorage.removeItem(META);
+ }catch(e){}
 };
 
 
@@ -429,7 +435,7 @@ document.getElementById("imageBtn").onclick=async function(){
   const vp=readVirt();
 
   text("motoGYM_calc",60,90,48,"#ffffff","left","800");
-  text("v0.0.22",1020,90,28,"#aaaaaa","right","600");
+  text("v0.0.23",1020,90,28,"#aaaaaa","right","600");
 
   let y=155;
   if(date||event){
@@ -455,9 +461,6 @@ document.getElementById("imageBtn").onclick=async function(){
     text("仮想トップ",540,y,34,"#bbbbbb","center","700");
     text(fmt(c.virtualTop),540,y+54,46,"#ffffff","center","800");
   }
-
-  text("自分",910,y,34,"#bbbbbb","center","700");
-  text(fmt(c.mine.sec),910,y+54,46,"#ffffff","center","800");
 
   y+=130;
   roundRect(50,y,980,350,34,"#20242d");

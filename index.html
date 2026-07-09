@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>motoGYM_calc v0.0.23</title>
+<title>motoGYM_calc v0.0.24</title>
 <style>
 body{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;background:#111;color:#fff;max-width:560px;margin:auto;padding:16px}
 h2{margin:0 0 14px}
@@ -31,7 +31,7 @@ button.danger{background:#c94455}
 </style>
 </head>
 <body>
-<h2>motoGYM_calc<br><small>v0.0.23</small></h2>
+<h2>motoGYM_calc<br><small>v0.0.24</small></h2>
 
 <div id="calcPage">
 <label>トップタイム</label>
@@ -76,12 +76,14 @@ button.danger{background:#c94455}
 
 <div id="savePage" class="hidden">
 <h3>保存情報</h3>
+<div id="editStatus" class="note">新規保存</div>
 <label>大会・練習会名</label><div style="display:flex;gap:8px;align-items:center"><input id="event" style="flex:1"><button type="button" id="clr_event" style="width:56px">×</button></div>
 <label>年月日</label><div style="display:flex;gap:8px;align-items:center"><input id="date" inputmode="numeric" style="flex:1"><button type="button" id="clr_date" style="width:56px">×</button></div>
 <label>マシン名</label><div style="display:flex;gap:8px;align-items:center"><input id="machine" style="flex:1"><button type="button" id="clr_machine" style="width:56px">×</button></div>
 <label>タイヤ銘柄</label><div style="display:flex;gap:8px;align-items:center"><input id="tire" style="flex:1"><button type="button" id="clr_tire" style="width:56px">×</button></div>
 <label>その他フリー入力事項</label><div style="display:flex;gap:8px;align-items:flex-start"><textarea id="memo" style="flex:1"></textarea><button type="button" id="clr_memo" style="width:56px;height:48px">×</button></div>
-<button onclick="saveLog()">保存する</button>
+<button id="saveLogBtn" onclick="saveLog()">保存する</button>
+<button id="cancelEditBtn" class="secondary hidden" onclick="cancelEdit()">編集をキャンセル</button>
 <button id="clearMeta" class="secondary" type="button">保存情報を全クリア</button>
 <button class="secondary" onclick="hideSave()">戻る</button>
 </div>
@@ -97,6 +99,7 @@ button.danger{background:#c94455}
 const STORE="motoGYM_calc_logs_v007";
 const STATE="motoGYM_calc_state_v007";
 const META="motoGYM_calc_meta_v007";
+let editingLogIndex=null;
 
 function $(id){return document.getElementById(id)}
 
@@ -246,6 +249,8 @@ function saveMeta(){
 $("saveBtn").onclick=()=>{
   let c=calc();
   if(!c){alert("計算できるタイムを入力してください");return;}
+  editingLogIndex=null;
+  updateEditStatus();
   $("calcPage").classList.add("hidden");
   $("savePage").classList.remove("hidden");
 };
@@ -255,24 +260,59 @@ function hideSave(){
   $("calcPage").classList.remove("hidden");
 }
 
-function saveLog(){
-  let c=calc();
-  if(!c){alert("計算できるタイムを入力してください");return;}
-  saveMeta();
-  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
-  $("date").value=normalizeDate($("date").value);
-  if(logs.length>=99){
-    const ok=confirm("保存件数が99件に達しています。\n最も古い記録を削除して保存しますか？");
-    if(!ok) return;
-  }
-  logs.unshift({
-    savedAt:new Date().toISOString(),
+function makeLogRecord(c, previousSavedAt){
+  return {
+    savedAt:previousSavedAt || new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
     event:$("event").value,date:$("date").value,machine:$("machine").value,tire:$("tire").value,memo:$("memo").value,
     topRaw:$("top").value,virtRaw:$("virt").value,mineRaw:$("mine").value,
     topFmt:c.top.text,virtualTopFmt:fmt(c.virtualTop),mineFmt:c.mine.text,
     ratio:c.ratio.toFixed(2),
     p105:fmt(c.virtualTop*1.05),p110:fmt(c.virtualTop*1.10),p115:fmt(c.virtualTop*1.15),p120:fmt(c.virtualTop*1.20)
-  });
+  };
+}
+
+function updateEditStatus(){
+  const editing = editingLogIndex!==null;
+  $("editStatus").textContent = editing ? `Log No.${editingLogIndex+1} を編集中（上書き保存）` : "新規保存";
+  $("saveLogBtn").textContent = editing ? "上書き保存する" : "保存する";
+  $("cancelEditBtn").classList.toggle("hidden", !editing);
+}
+
+function cancelEdit(){
+  editingLogIndex=null;
+  updateEditStatus();
+}
+
+function saveLog(){
+  let c=calc();
+  if(!c){alert("計算できるタイムを入力してください");return;}
+  $("date").value=normalizeDate($("date").value);
+  saveMeta();
+  let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
+
+  if(editingLogIndex!==null){
+    if(!logs[editingLogIndex]){
+      alert("編集対象のLogが見つかりません。新規保存に切り替えます。");
+      editingLogIndex=null;
+      updateEditStatus();
+      return;
+    }
+    const previousSavedAt=logs[editingLogIndex].savedAt;
+    logs[editingLogIndex]=makeLogRecord(c, previousSavedAt);
+    localStorage.setItem(STORE,JSON.stringify(logs));
+    alert("Logを上書き保存しました");
+    editingLogIndex=null;
+    updateEditStatus();
+    hideSave();
+    return;
+  }
+
+  if(logs.length>=99){
+    const ok=confirm("保存件数が99件に達しています。\n最も古い記録を削除して保存しますか？");
+    if(!ok) return;
+  }
+  logs.unshift(makeLogRecord(c));
   if(logs.length>99) logs.pop();
   localStorage.setItem(STORE,JSON.stringify(logs));
   alert("保存しました");
@@ -303,10 +343,25 @@ function loadLogs(){
     105% ${esc(l.p105)}　110% ${esc(l.p110)}　115% ${esc(l.p115)}　120% ${esc(l.p120)}<br>
     ${esc(l.memo||"")}<br>
     <button onclick="loadOne(${i})">読込</button>
+    <button class="secondary" onclick="editLog(${i})">編集</button>
     <button class="danger" onclick="delLog(${i})">削除</button>`;
     $("logList").appendChild(d);
   });
 }
+
+function editLog(i){
+  let l=JSON.parse(localStorage.getItem(STORE)||"[]")[i];
+  if(!l)return;
+  $("top").value=l.topRaw;$("virt").value=l.virtRaw;$("mine").value=l.mineRaw;
+  $("event").value=l.event;$("date").value=l.date;$("machine").value=l.machine;$("tire").value=l.tire;$("memo").value=l.memo;
+  editingLogIndex=i;
+  saveMeta();calc();
+  $("logPage").classList.add("hidden");
+  $("calcPage").classList.add("hidden");
+  $("savePage").classList.remove("hidden");
+  updateEditStatus();
+}
+
 function loadOne(i){
   let l=JSON.parse(localStorage.getItem(STORE)||"[]")[i];
   if(!l)return;
@@ -318,12 +373,19 @@ function delLog(i){
   if(!confirm("このLogを削除しますか？"))return;
   let logs=JSON.parse(localStorage.getItem(STORE)||"[]");
   logs.splice(i,1);
+  if(editingLogIndex!==null){
+    if(editingLogIndex===i) editingLogIndex=null;
+    else if(editingLogIndex>i) editingLogIndex--;
+    updateEditStatus();
+  }
   localStorage.setItem(STORE,JSON.stringify(logs));
   loadLogs();
 }
 function clearLogs(){
   if(confirm("Logを全削除しますか？")){
     localStorage.removeItem(STORE);
+    editingLogIndex=null;
+    updateEditStatus();
     loadLogs();
   }
 }
@@ -435,7 +497,7 @@ document.getElementById("imageBtn").onclick=async function(){
   const vp=readVirt();
 
   text("motoGYM_calc",60,90,48,"#ffffff","left","800");
-  text("v0.0.23",1020,90,28,"#aaaaaa","right","600");
+  text("v0.0.24",1020,90,28,"#aaaaaa","right","600");
 
   let y=155;
   if(date||event){
